@@ -76,11 +76,11 @@ if archivo:
                     fila = ""
                     for c in range(maze.shape[1]):
                         if (r, c) == start:
-                            fila += "🟥"
+                            fila += "🚀"
                         elif (r, c) == end:
                             fila += "🏁"
                         elif (r, c) in path:
-                            fila += "🔵"
+                            fila += "🔷"
                         elif maze[r, c] == 1:
                             fila += "⬛"
                         else:
