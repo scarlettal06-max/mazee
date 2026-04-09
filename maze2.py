@@ -1,88 +1,94 @@
 import streamlit as st
 import numpy as np
-from collections import deque
+import collections
+import re
 import time
 
-def solve_maze(maze, start, end):
+def solve_maze_bfs(maze, start, end):
     start_time = time.time()
-    queue = deque([(start, [start])])
-    visited = {start}
+    rows, cols = len(maze), len(maze[0])
+    queue = collections.deque([(start, [start])])
+    visited = set([start])
 
     while queue:
         (r, c), path = queue.popleft()
 
         if (r, c) == end:
-            return path, (time.time() - start_time)
+            return path, time.time() - start_time
 
-        for dr, dc in [(0,1),(1,0),(0,-1),(-1,0)]:
-            nr, nc = r + dr, c + dc
+        for dr, dc in [(0,1),(0,-1),(1,0),(-1,0)]:
+            nr, nc = r+dr, c+dc
 
-            if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
-                if maze[nr, nc] != 1 and (nr, nc) not in visited:
-                    visited.add((nr, nc))
-                    queue.append(((nr, nc), path + [(nr, nc)]))
+            if (0 <= nr < rows and 0 <= nc < cols and 
+                maze[nr][nc] != 1 and 
+                (nr, nc) not in visited):
+
+                visited.add((nr, nc))
+                queue.append(((nr, nc), path + [(nr, nc)]))
 
     return None, 0
 
 
-st.title("🧩 Cargador de Laberintos (.txt)")
+# 🔥 SIDEBAR (como en tu imagen)
+st.sidebar.title("OPCIONES DE LA APP")
+st.sidebar.write("Carga el laberinto")
+st.sidebar.caption("1=pared, 0=camino, 2=inicio, 3=final")
 
-archivo = st.file_uploader("Sube tu archivo .txt", type=["txt"])
+archivo = st.sidebar.file_uploader("Sube tu archivo .txt", type=["txt"])
+
+algoritmo = st.sidebar.selectbox("Selecciona algoritmo", ["BFS"])
+
+resolver = st.sidebar.button("Resolver Laberinto Cargado")
+
+
+# 🔥 TÍTULO PRINCIPAL
+st.title("Visualizador de Algoritmo de Búsqueda en Laberinto")
+
 
 if archivo:
     content = archivo.read().decode("utf-8")
     lines = content.strip().split('\n')
 
     maze_data = []
-
-    try:
-        for line in lines:
-            # Separar por espacios
-            row = [int(x) for x in line.strip().split()]
+    for line in lines:
+        row = [int(d) for d in re.findall(r'\d', line)]
+        if row:
             maze_data.append(row)
 
-        maze_np = np.array(maze_data)
+    maze = np.array(maze_data)
 
-        # 🔍 Buscar inicio (2) y fin (3)
-        start_positions = np.argwhere(maze_np == 2)
-        end_positions = np.argwhere(maze_np == 3)
+    # Buscar inicio y fin
+    p2 = np.where(maze == 2)
+    p3 = np.where(maze == 3)
 
-        # 🚨 Validaciones importantes
-        if len(start_positions) != 1 or len(end_positions) != 1:
-            st.error("Debe haber exactamente UN '2' (inicio) y UN '3' (meta).")
-        else:
-            start = tuple(start_positions[0])
-            end = tuple(end_positions[0])
+    if p2[0].size > 0 and p3[0].size > 0:
+        start = (p2[0][0], p2[1][0])
+        end = (p3[0][0], p3[1][0])
 
-            st.write("📌 Laberinto cargado:")
-            st.write(maze_np)
+        if resolver:
+            path, tiempo = solve_maze_bfs(maze, start, end)
 
-            if st.button("Resolver Laberinto"):
-                ruta, tiempo = solve_maze(maze_np, start, end)
+            if path:
+                st.success(f"BFS resuelto en {tiempo:.6f} s | Pasos: {len(path)}")
 
-                if ruta:
-                    st.success(f"✅ Resuelto en {tiempo:.6f} segundos | Pasos: {len(ruta)}")
-
-                    # Mostrar visualmente
-                    for r in range(maze_np.shape[0]):
-                        fila = ""
-                        for c in range(maze_np.shape[1]):
-                            if (r, c) == start:
-                                fila += "🚀"
-                            elif (r, c) == end:
-                                fila += "🏁"
-                            elif (r, c) in ruta:
-                                fila += "🔵"
-                            elif maze_np[r, c] == 1:
-                                fila += "⬛"
-                            else:
-                                fila += "⬜"
-                        st.text(fila)
-                else:
-                    st.error("❌ No hay ruta posible.")
-
-    except:
-        st.error("⚠️ Error al leer el archivo. Asegúrate de usar solo números separados por espacios.")
-
+                # 🔥 VISUAL TIPO CUADRITOS (como tu imagen)
+                for r in range(maze.shape[0]):
+                    fila = ""
+                    for c in range(maze.shape[1]):
+                        if (r, c) == start:
+                            fila += "🟥"
+                        elif (r, c) == end:
+                            fila += "🏁"
+                        elif (r, c) in path:
+                            fila += "🔵"
+                        elif maze[r, c] == 1:
+                            fila += "⬛"
+                        else:
+                            fila += "⬜"
+                    st.text(fila)
+            else:
+                st.error("No se encontró solución")
+    else:
+        st.warning("Debe existir un 2 (inicio) y un 3 (final)")
 else:
-    st.info("📂 Esperando archivo .txt...")
+    st.info("Carga un archivo para comenzar")
