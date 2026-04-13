@@ -71,17 +71,30 @@ if archivo:
 
     try:
         for line in lines:
-            row = [int(x) for x in line.strip().split()]
+            line = line.strip()
+
+            # 🔥 DETECCIÓN AUTOMÁTICA DE FORMATO
+            if " " in line:
+                row = [int(x) for x in line.split()]
+            else:
+                row = [int(x) for x in line]
+
             maze_data.append(row)
 
         maze_np = np.array(maze_data)
+
+        # 🔍 DEBUG (para verificar lectura)
+        st.write("Valores detectados:", np.unique(maze_np))
 
         # 🔍 Buscar inicio (2) y fin (3)
         start_positions = np.argwhere(maze_np == 2)
         end_positions = np.argwhere(maze_np == 3)
 
+        st.write("Inicio encontrados:", len(start_positions))
+        st.write("Finales encontrados:", len(end_positions))
+
         if len(start_positions) != 1 or len(end_positions) != 1:
-            st.error("Debe haber exactamente UN '2' (inicio) y UN '3' (meta).")
+            st.error("❌ Debe haber exactamente UN '2' (inicio) y UN '3' (meta).")
         else:
             start = tuple(start_positions[0])
             end = tuple(end_positions[0])
@@ -112,21 +125,17 @@ if archivo:
                             elif (r, c) == end:
                                 fila += "🏁"
                             elif (r, c) in ruta:
-                                # Diferenciar BFS y DFS
-                                if nombre_metodo == "BFS":
-                                    fila += "🔵"
-                                else:
-                                    fila += "🟣"
+                                fila += "🔵" if nombre_metodo == "BFS" else "🟣"
                             elif maze_np[r, c] == 1:
                                 fila += "⬛"
                             else:
                                 fila += "⬜"
                         st.text(fila)
                 else:
-                    st.error("❌ No hay ruta posible.")
+                    st.warning("⚠️ No hay ruta posible. El laberinto está bloqueado.")
 
     except:
-        st.error("⚠️ Error al leer el archivo. Usa números separados por espacios.")
+        st.error("⚠️ Error al leer el archivo. Verifica el formato.")
 
 else:
     st.info("📂 Sube un archivo .txt para comenzar")
