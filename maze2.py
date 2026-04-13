@@ -49,9 +49,19 @@ def solve_maze_dfs(maze, start, end):
     return None, 0
 
 
-st.title("🧩 Cargador de Laberintos (.txt)")
+# 🎨 INTERFAZ
+st.set_page_config(page_title="Laberintos", layout="wide")
 
-archivo = st.file_uploader("Sube tu archivo .txt", type=["txt"])
+st.sidebar.header("OPCIONES DE LA APP")
+
+archivo = st.sidebar.file_uploader("Carga el laberinto (.txt)", type=["txt"])
+
+metodo = st.sidebar.selectbox(
+    "Selecciona algoritmo",
+    ["BFS", "DFS en proceso"]
+)
+
+st.title("🧩 Solucionador de Laberintos")
 
 if archivo:
     content = archivo.read().decode("utf-8")
@@ -76,22 +86,24 @@ if archivo:
             start = tuple(start_positions[0])
             end = tuple(end_positions[0])
 
-            st.write("📌 Laberinto cargado:")
+            st.subheader("📌 Laberinto cargado")
             st.write(maze_np)
 
-            # 🔽 NUEVO: Selección de algoritmo
-            metodo = st.selectbox("Selecciona el método:", ["BFS", "DFS"])
-
             if st.button("Resolver Laberinto"):
-                
+
                 if metodo == "BFS":
                     ruta, tiempo = solve_maze_bfs(maze_np, start, end)
-                else:
-                    ruta, tiempo = solve_maze_dfs(maze_np, start, end)
+
+                elif metodo == "DFS en proceso":
+                    with st.spinner("🔄 Ejecutando DFS..."):
+                        ruta, tiempo = solve_maze_dfs(maze_np, start, end)
 
                 if ruta:
-                    st.success(f"✅ {metodo} resuelto en {tiempo:.6f} segundos | Pasos: {len(ruta)}")
+                    nombre_metodo = "DFS" if metodo == "DFS en proceso" else "BFS"
 
+                    st.success(f"✅ {nombre_metodo} resuelto en {tiempo:.6f} segundos | Pasos: {len(ruta)}")
+
+                    # 🧱 Visualización
                     for r in range(maze_np.shape[0]):
                         fila = ""
                         for c in range(maze_np.shape[1]):
@@ -100,7 +112,11 @@ if archivo:
                             elif (r, c) == end:
                                 fila += "🏁"
                             elif (r, c) in ruta:
-                                fila += "🔵"
+                                # Diferenciar BFS y DFS
+                                if nombre_metodo == "BFS":
+                                    fila += "🔵"
+                                else:
+                                    fila += "🟣"
                             elif maze_np[r, c] == 1:
                                 fila += "⬛"
                             else:
@@ -113,4 +129,4 @@ if archivo:
         st.error("⚠️ Error al leer el archivo. Usa números separados por espacios.")
 
 else:
-    st.info("📂 Esperando archivo .txt...")
+    st.info("📂 Sube un archivo .txt para comenzar")
