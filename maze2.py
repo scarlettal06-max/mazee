@@ -3,7 +3,9 @@ import numpy as np
 from collections import deque
 import time
 
+# =========================
 # 🔵 BFS
+# =========================
 def solve_maze_bfs(maze, start, end):
     start_time = time.time()
     queue = deque([(start, [start])])
@@ -26,7 +28,9 @@ def solve_maze_bfs(maze, start, end):
     return None, 0
 
 
+# =========================
 # 🟣 DFS
+# =========================
 def solve_maze_dfs(maze, start, end):
     start_time = time.time()
     stack = [(start, [start])]
@@ -49,20 +53,25 @@ def solve_maze_dfs(maze, start, end):
     return None, 0
 
 
-# 🎨 INTERFAZ
+# =========================
+# 🎨 CONFIG UI
+# =========================
 st.set_page_config(page_title="Laberintos", layout="wide")
 
-st.sidebar.header("OPCIONES DE LA APP")
+st.sidebar.header("🛠 OPCIONES")
 
-archivo = st.sidebar.file_uploader("Carga el laberinto (.txt)", type=["txt"])
+archivo = st.sidebar.file_uploader("Cargar archivo (.txt)", type=["txt"])
 
 metodo = st.sidebar.selectbox(
     "Selecciona algoritmo",
-    ["BFS", "DFS en proceso"]
+    ["BFS", "DFS"]
 )
 
 st.title("🧩 Solucionador de Laberintos")
 
+# =========================
+# 📂 PROCESAMIENTO
+# =========================
 if archivo:
     content = archivo.read().decode("utf-8")
     lines = content.strip().split('\n')
@@ -73,7 +82,7 @@ if archivo:
         for line in lines:
             line = line.strip()
 
-            # 🔥 DETECCIÓN AUTOMÁTICA DE FORMATO
+            # 🔥 Detecta formato automático
             if " " in line:
                 row = [int(x) for x in line.split()]
             else:
@@ -83,15 +92,9 @@ if archivo:
 
         maze_np = np.array(maze_data)
 
-        # 🔍 DEBUG (para verificar lectura)
-        st.write("Valores detectados:", np.unique(maze_np))
-
-        # 🔍 Buscar inicio (2) y fin (3)
+        # 🔍 Buscar inicio y fin
         start_positions = np.argwhere(maze_np == 2)
         end_positions = np.argwhere(maze_np == 3)
-
-        st.write("Inicio encontrados:", len(start_positions))
-        st.write("Finales encontrados:", len(end_positions))
 
         if len(start_positions) != 1 or len(end_positions) != 1:
             st.error("❌ Debe haber exactamente UN '2' (inicio) y UN '3' (meta).")
@@ -99,43 +102,49 @@ if archivo:
             start = tuple(start_positions[0])
             end = tuple(end_positions[0])
 
-            st.subheader("📌 Laberinto cargado")
-            st.write(maze_np)
+            if st.button("🚀 Resolver Laberinto"):
 
-            if st.button("Resolver Laberinto"):
-
-                if metodo == "BFS":
-                    ruta, tiempo = solve_maze_bfs(maze_np, start, end)
-
-                elif metodo == "DFS en proceso":
-                    with st.spinner("🔄 Ejecutando DFS..."):
+                # =========================
+                # 🚀 EJECUCIÓN
+                # =========================
+                with st.spinner(f"Resolviendo con {metodo}..."):
+                    if metodo == "BFS":
+                        ruta, tiempo = solve_maze_bfs(maze_np, start, end)
+                    else:
                         ruta, tiempo = solve_maze_dfs(maze_np, start, end)
 
+                # =========================
+                # 📊 RESULTADO
+                # =========================
                 if ruta:
-                    nombre_metodo = "DFS" if metodo == "DFS en proceso" else "BFS"
+                    st.success(f"✅ {metodo} completado en {tiempo:.6f}s | Pasos: {len(ruta)}")
 
-                    st.success(f"✅ {nombre_metodo} resuelto en {tiempo:.6f} segundos | Pasos: {len(ruta)}")
+                    # =========================
+                    # 🎮 VISUALIZACIÓN LIMPIA
+                    # =========================
+                    laberinto = ""
 
-                    # 🧱 Visualización
                     for r in range(maze_np.shape[0]):
-                        fila = ""
                         for c in range(maze_np.shape[1]):
                             if (r, c) == start:
-                                fila += "🚀"
+                                laberinto += "🚀 "
                             elif (r, c) == end:
-                                fila += "🏁"
+                                laberinto += "🏁 "
                             elif (r, c) in ruta:
-                                fila += "🔵" if nombre_metodo == "BFS" else "🟣"
+                                laberinto += "🔵 " if metodo == "BFS" else "🟣 "
                             elif maze_np[r, c] == 1:
-                                fila += "⬛"
+                                laberinto += "⬛ "
                             else:
-                                fila += "⬜"
-                        st.text(fila)
+                                laberinto += "⬜ "
+                        laberinto += "\n"
+
+                    # 🔥 render perfecto alineado
+                    st.markdown(f"```\n{laberinto}\n```")
+
                 else:
                     st.warning("⚠️ No hay ruta posible. El laberinto está bloqueado.")
 
     except:
-        st.error("⚠️ Error al leer el archivo. Verifica el formato.")
-
+        st.error("⚠️ Error al leer el archivo. Verifica que solo tenga números.")
 else:
     st.info("📂 Sube un archivo .txt para comenzar")
