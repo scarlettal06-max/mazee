@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 from collections import deque
 import time
+import heapq
 
 # =========================
 # 🔵 BFS
@@ -54,6 +55,50 @@ def solve_maze_dfs(maze, start, end):
 
 
 # =========================
+# ⭐ A* (A Estrella)
+# =========================
+def heuristic(a, b):
+    # Distancia de Manhattan
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+def solve_maze_astar(maze, start, end):
+    start_time = time.time()
+
+    open_set = []
+    heapq.heappush(open_set, (0, start, [start]))
+
+    g_cost = {start: 0}
+    visited = set()
+
+    while open_set:
+        _, current, path = heapq.heappop(open_set)
+
+        if current in visited:
+            continue
+        visited.add(current)
+
+        if current == end:
+            return path, (time.time() - start_time)
+
+        r, c = current
+
+        for dr, dc in [(0,1),(1,0),(0,-1),(-1,0)]:
+            nr, nc = r + dr, c + dc
+            neighbor = (nr, nc)
+
+            if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
+                if maze[nr, nc] != 1:
+                    new_g = g_cost[current] + 1
+
+                    if neighbor not in g_cost or new_g < g_cost[neighbor]:
+                        g_cost[neighbor] = new_g
+                        f_cost = new_g + heuristic(neighbor, end)
+                        heapq.heappush(open_set, (f_cost, neighbor, path + [neighbor]))
+
+    return None, 0
+
+
+# =========================
 # 🎨 CONFIG UI
 # =========================
 st.set_page_config(page_title="Laberintos", layout="wide")
@@ -64,7 +109,7 @@ archivo = st.sidebar.file_uploader("Cargar archivo (.txt)", type=["txt"])
 
 metodo = st.sidebar.selectbox(
     "Selecciona algoritmo",
-    ["BFS", "DFS"]
+    ["BFS", "DFS", "A*"]
 )
 
 st.title("🧩 Solucionador de Laberintos")
@@ -82,7 +127,6 @@ if archivo:
         for line in lines:
             line = line.strip()
 
-            # 🔥 Detecta formato automático
             if " " in line:
                 row = [int(x) for x in line.split()]
             else:
@@ -110,8 +154,10 @@ if archivo:
                 with st.spinner(f"Resolviendo con {metodo}..."):
                     if metodo == "BFS":
                         ruta, tiempo = solve_maze_bfs(maze_np, start, end)
-                    else:
+                    elif metodo == "DFS":
                         ruta, tiempo = solve_maze_dfs(maze_np, start, end)
+                    else:
+                        ruta, tiempo = solve_maze_astar(maze_np, start, end)
 
                 # =========================
                 # 📊 RESULTADO
@@ -131,14 +177,18 @@ if archivo:
                             elif (r, c) == end:
                                 laberinto += "🏁 "
                             elif (r, c) in ruta:
-                                laberinto += "🔵 " if metodo == "BFS" else "🟣 "
+                                if metodo == "BFS":
+                                    laberinto += "🔵 "
+                                elif metodo == "DFS":
+                                    laberinto += "🟣 "
+                                else:
+                                    laberinto += "🟢 "
                             elif maze_np[r, c] == 1:
                                 laberinto += "⬛ "
                             else:
                                 laberinto += "⬜ "
                         laberinto += "\n"
 
-                    # 🔥 render perfecto alineado
                     st.markdown(f"```\n{laberinto}\n```")
 
                 else:
