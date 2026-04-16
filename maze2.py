@@ -5,7 +5,7 @@ import time
 import heapq
 
 # =========================
-# 🔵 BFS (CAMINO ÓPTIMO)
+# 🔵 BFS (SIN CAMBIOS)
 # =========================
 def solve_maze_bfs(maze, start, end):
     start_time = time.time()
@@ -30,7 +30,7 @@ def solve_maze_bfs(maze, start, end):
 
 
 # =========================
-# 🟣 DFS (RUTA LARGA)
+# 🟣 DFS (SOLO ORDEN CAMBIADO)
 # =========================
 def solve_maze_dfs(maze, start, end):
     start_time = time.time()
@@ -42,7 +42,7 @@ def solve_maze_dfs(maze, start, end):
         if (r, c) == end:
             return path, (time.time() - start_time)
 
-        # 🔥 fuerza camino equivocado
+        # 🔥 CAMBIO AQUÍ
         for dr, dc in [(1,0),(0,-1),(0,1),(-1,0)]:
             nr, nc = r + dr, c + dc
 
@@ -54,7 +54,7 @@ def solve_maze_dfs(maze, start, end):
 
 
 # =========================
-# 🟢 A* (RUTA DIFERENTE)
+# 🟢 A* (SOLO DESEMPATE)
 # =========================
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
@@ -63,13 +63,13 @@ def solve_maze_astar(maze, start, end):
     start_time = time.time()
 
     open_set = []
-    heapq.heappush(open_set, (0, start, [start]))
+    heapq.heappush(open_set, (0, 0, start, [start]))  # 🔥 CAMBIO
 
     g_cost = {start: 0}
     visited = set()
 
     while open_set:
-        _, current, path = heapq.heappop(open_set)
+        _, _, current, path = heapq.heappop(open_set)  # 🔥 CAMBIO
 
         if current in visited:
             continue
@@ -91,21 +91,23 @@ def solve_maze_astar(maze, start, end):
                     if neighbor not in g_cost or new_g < g_cost[neighbor]:
                         g_cost[neighbor] = new_g
 
-                        # 🔥 clave: heuristic exagerada
-                        f_cost = new_g + 2 * heuristic(neighbor, end)
+                        f_cost = new_g + heuristic(neighbor, end)
 
-                        heapq.heappush(open_set, (f_cost, neighbor, path + [neighbor]))
+                        # 🔥 CAMBIO CLAVE AQUÍ
+                        heapq.heappush(
+                            open_set,
+                            (f_cost, -heuristic(neighbor, end), neighbor, path + [neighbor])
+                        )
 
     return None, 0
 
 
 # =========================
-# 🎨 CONFIG UI
+# 🎨 CONFIG UI (IGUAL)
 # =========================
 st.set_page_config(page_title="Laberintos", layout="wide")
 
 st.sidebar.header("🛠 OPCIONES")
-
 archivo = st.sidebar.file_uploader("Cargar archivo (.txt)", type=["txt"])
 
 metodo = st.sidebar.selectbox(
@@ -116,7 +118,7 @@ metodo = st.sidebar.selectbox(
 st.title("🧩 Solucionador de Laberintos")
 
 # =========================
-# 📂 PROCESAMIENTO
+# 📂 PROCESAMIENTO (IGUAL)
 # =========================
 if archivo:
     content = archivo.read().decode("utf-8")
