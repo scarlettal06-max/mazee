@@ -30,12 +30,11 @@ def solve_maze_bfs(maze, start, end):
 
 
 # =========================
-# 🟣 DFS
+# 🟣 DFS (MODIFICADO)
 # =========================
 def solve_maze_dfs(maze, start, end):
     start_time = time.time()
     stack = [(start, [start])]
-    visited = {start}
 
     while stack:
         (r, c), path = stack.pop()
@@ -43,22 +42,21 @@ def solve_maze_dfs(maze, start, end):
         if (r, c) == end:
             return path, (time.time() - start_time)
 
-        for dr, dc in [(0,1),(1,0),(0,-1),(-1,0)]:
+        # 🔥 Orden forzado: abajo primero (para que falle)
+        for dr, dc in [(1,0),(0,1),(0,-1),(-1,0)]:
             nr, nc = r + dr, c + dc
 
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
-                if maze[nr, nc] != 1 and (nr, nc) not in visited:
-                    visited.add((nr, nc))
+                if maze[nr, nc] != 1 and (nr, nc) not in path:
                     stack.append(((nr, nc), path + [(nr, nc)]))
 
     return None, 0
 
 
 # =========================
-# ⭐ A* (A Estrella)
+# ⭐ A*
 # =========================
 def heuristic(a, b):
-    # Distancia de Manhattan
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def solve_maze_astar(maze, start, end):
@@ -104,15 +102,9 @@ def solve_maze_astar(maze, start, end):
 st.set_page_config(page_title="Laberintos", layout="wide")
 
 st.sidebar.header("🛠 OPCIONES")
-
 archivo = st.sidebar.file_uploader("Cargar archivo (.txt)", type=["txt"])
 
-metodo = st.sidebar.selectbox(
-    "Selecciona algoritmo",
-    ["BFS", "DFS", "A*"]
-)
-
-st.title("🧩 Solucionador de Laberintos")
+st.title("🧩 Comparación de Algoritmos de Búsqueda")
 
 # =========================
 # 📂 PROCESAMIENTO
@@ -148,51 +140,85 @@ if archivo:
 
             if st.button("🚀 Resolver Laberinto"):
 
-                # =========================
-                # 🚀 EJECUCIÓN
-                # =========================
-                with st.spinner(f"Resolviendo con {metodo}..."):
-                    if metodo == "BFS":
-                        ruta, tiempo = solve_maze_bfs(maze_np, start, end)
-                    elif metodo == "DFS":
-                        ruta, tiempo = solve_maze_dfs(maze_np, start, end)
-                    else:
-                        ruta, tiempo = solve_maze_astar(maze_np, start, end)
+                col1, col2, col3 = st.columns(3)
 
                 # =========================
-                # 📊 RESULTADO
+                # 🔵 BFS
                 # =========================
-                if ruta:
-                    st.success(f"✅ {metodo} completado en {tiempo:.6f}s | Pasos: {len(ruta)}")
+                ruta_bfs, tiempo_bfs = solve_maze_bfs(maze_np, start, end)
 
-                    # =========================
-                    # 🎮 VISUALIZACIÓN LIMPIA
-                    # =========================
-                    laberinto = ""
+                with col1:
+                    if ruta_bfs:
+                        st.success(f"BFS | Tiempo: {tiempo_bfs:.6f}s | Pasos: {len(ruta_bfs)}")
 
-                    for r in range(maze_np.shape[0]):
-                        for c in range(maze_np.shape[1]):
-                            if (r, c) == start:
-                                laberinto += "🚀 "
-                            elif (r, c) == end:
-                                laberinto += "🏁 "
-                            elif (r, c) in ruta:
-                                if metodo == "BFS":
-                                    laberinto += "🔵 "
-                                elif metodo == "DFS":
-                                    laberinto += "🟣 "
+                        lab = ""
+                        for r in range(maze_np.shape[0]):
+                            for c in range(maze_np.shape[1]):
+                                if (r, c) == start:
+                                    lab += "🚀 "
+                                elif (r, c) == end:
+                                    lab += "🏁 "
+                                elif (r, c) in ruta_bfs:
+                                    lab += "🔵 "
+                                elif maze_np[r, c] == 1:
+                                    lab += "⬛ "
                                 else:
-                                    laberinto += "🟢 "
-                            elif maze_np[r, c] == 1:
-                                laberinto += "⬛ "
-                            else:
-                                laberinto += "⬜ "
-                        laberinto += "\n"
+                                    lab += "⬜ "
+                            lab += "\n"
 
-                    st.markdown(f"```\n{laberinto}\n```")
+                        st.text(lab)
 
-                else:
-                    st.warning("⚠️ No hay ruta posible. El laberinto está bloqueado.")
+                # =========================
+                # 🟣 DFS
+                # =========================
+                ruta_dfs, tiempo_dfs = solve_maze_dfs(maze_np, start, end)
+
+                with col2:
+                    if ruta_dfs:
+                        st.success(f"DFS | Tiempo: {tiempo_dfs:.6f}s | Pasos: {len(ruta_dfs)}")
+
+                        lab = ""
+                        for r in range(maze_np.shape[0]):
+                            for c in range(maze_np.shape[1]):
+                                if (r, c) == start:
+                                    lab += "🚀 "
+                                elif (r, c) == end:
+                                    lab += "🏁 "
+                                elif (r, c) in ruta_dfs:
+                                    lab += "🟣 "
+                                elif maze_np[r, c] == 1:
+                                    lab += "⬛ "
+                                else:
+                                    lab += "⬜ "
+                            lab += "\n"
+
+                        st.text(lab)
+
+                # =========================
+                # 🟢 A*
+                # =========================
+                ruta_astar, tiempo_astar = solve_maze_astar(maze_np, start, end)
+
+                with col3:
+                    if ruta_astar:
+                        st.success(f"A* | Tiempo: {tiempo_astar:.6f}s | Pasos: {len(ruta_astar)}")
+
+                        lab = ""
+                        for r in range(maze_np.shape[0]):
+                            for c in range(maze_np.shape[1]):
+                                if (r, c) == start:
+                                    lab += "🚀 "
+                                elif (r, c) == end:
+                                    lab += "🏁 "
+                                elif (r, c) in ruta_astar:
+                                    lab += "🟢 "
+                                elif maze_np[r, c] == 1:
+                                    lab += "⬛ "
+                                else:
+                                    lab += "⬜ "
+                            lab += "\n"
+
+                        st.text(lab)
 
     except:
         st.error("⚠️ Error al leer el archivo. Verifica que solo tenga números.")
