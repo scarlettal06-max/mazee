@@ -30,12 +30,11 @@ def solve_maze_bfs(maze, start, end):
 
 
 # =========================
-# 🟣 DFS
+# 🟣 DFS (MODIFICADO SOLO LO NECESARIO)
 # =========================
 def solve_maze_dfs(maze, start, end):
     start_time = time.time()
     stack = [(start, [start])]
-    visited = {start}
 
     while stack:
         (r, c), path = stack.pop()
@@ -43,12 +42,13 @@ def solve_maze_dfs(maze, start, end):
         if (r, c) == end:
             return path, (time.time() - start_time)
 
-        for dr, dc in [(0,1),(1,0),(0,-1),(-1,0)]:
+        # 🔥 CAMBIO 1: orden diferente (baja primero)
+        for dr, dc in [(1,0),(0,1),(0,-1),(-1,0)]:
             nr, nc = r + dr, c + dc
 
+            # 🔥 CAMBIO 2: usar path en vez de visited
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
-                if maze[nr, nc] != 1 and (nr, nc) not in visited:
-                    visited.add((nr, nc))
+                if maze[nr, nc] != 1 and (nr, nc) not in path:
                     stack.append(((nr, nc), path + [(nr, nc)]))
 
     return None, 0
