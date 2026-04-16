@@ -5,7 +5,7 @@ import time
 import heapq
 
 # =========================
-# 🔵 BFS
+# 🔵 BFS (CAMINO ÓPTIMO)
 # =========================
 def solve_maze_bfs(maze, start, end):
     start_time = time.time()
@@ -30,7 +30,7 @@ def solve_maze_bfs(maze, start, end):
 
 
 # =========================
-# 🟣 DFS (MODIFICADO SOLO LO NECESARIO)
+# 🟣 DFS (RUTA LARGA)
 # =========================
 def solve_maze_dfs(maze, start, end):
     start_time = time.time()
@@ -42,11 +42,10 @@ def solve_maze_dfs(maze, start, end):
         if (r, c) == end:
             return path, (time.time() - start_time)
 
-        # 🔥 CAMBIO 1: orden diferente (baja primero)
-        for dr, dc in [(1,0),(0,1),(0,-1),(-1,0)]:
+        # 🔥 fuerza camino equivocado
+        for dr, dc in [(1,0),(0,-1),(0,1),(-1,0)]:
             nr, nc = r + dr, c + dc
 
-            # 🔥 CAMBIO 2: usar path en vez de visited
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
                 if maze[nr, nc] != 1 and (nr, nc) not in path:
                     stack.append(((nr, nc), path + [(nr, nc)]))
@@ -55,10 +54,9 @@ def solve_maze_dfs(maze, start, end):
 
 
 # =========================
-# ⭐ A* (A Estrella)
+# 🟢 A* (RUTA DIFERENTE)
 # =========================
 def heuristic(a, b):
-    # Distancia de Manhattan
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def solve_maze_astar(maze, start, end):
@@ -92,7 +90,10 @@ def solve_maze_astar(maze, start, end):
 
                     if neighbor not in g_cost or new_g < g_cost[neighbor]:
                         g_cost[neighbor] = new_g
-                        f_cost = new_g + heuristic(neighbor, end)
+
+                        # 🔥 clave: heuristic exagerada
+                        f_cost = new_g + 2 * heuristic(neighbor, end)
+
                         heapq.heappush(open_set, (f_cost, neighbor, path + [neighbor]))
 
     return None, 0
@@ -136,21 +137,17 @@ if archivo:
 
         maze_np = np.array(maze_data)
 
-        # 🔍 Buscar inicio y fin
         start_positions = np.argwhere(maze_np == 2)
         end_positions = np.argwhere(maze_np == 3)
 
         if len(start_positions) != 1 or len(end_positions) != 1:
-            st.error("❌ Debe haber exactamente UN '2' (inicio) y UN '3' (meta).")
+            st.error("❌ Debe haber exactamente UN '2' y UN '3'")
         else:
             start = tuple(start_positions[0])
             end = tuple(end_positions[0])
 
             if st.button("🚀 Resolver Laberinto"):
 
-                # =========================
-                # 🚀 EJECUCIÓN
-                # =========================
                 with st.spinner(f"Resolviendo con {metodo}..."):
                     if metodo == "BFS":
                         ruta, tiempo = solve_maze_bfs(maze_np, start, end)
@@ -159,15 +156,9 @@ if archivo:
                     else:
                         ruta, tiempo = solve_maze_astar(maze_np, start, end)
 
-                # =========================
-                # 📊 RESULTADO
-                # =========================
                 if ruta:
-                    st.success(f"✅ {metodo} completado en {tiempo:.6f}s | Pasos: {len(ruta)}")
+                    st.success(f"✅ {metodo} | Tiempo: {tiempo:.6f}s | Pasos: {len(ruta)}")
 
-                    # =========================
-                    # 🎮 VISUALIZACIÓN LIMPIA
-                    # =========================
                     laberinto = ""
 
                     for r in range(maze_np.shape[0]):
@@ -189,12 +180,12 @@ if archivo:
                                 laberinto += "⬜ "
                         laberinto += "\n"
 
-                    st.markdown(f"```\n{laberinto}\n```")
+                    st.text(laberinto)
 
                 else:
-                    st.warning("⚠️ No hay ruta posible. El laberinto está bloqueado.")
+                    st.warning("⚠️ No hay ruta posible.")
 
     except:
-        st.error("⚠️ Error al leer el archivo. Verifica que solo tenga números.")
+        st.error("⚠️ Error al leer el archivo.")
 else:
-    st.info("📂 Sube un archivo .txt para comenzar")
+    st.info("📂 Sube un archivo .txt")
