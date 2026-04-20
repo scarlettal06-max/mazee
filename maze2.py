@@ -57,11 +57,11 @@ def solve_maze_astar(maze, start, end):
     start_time = time.time()
 
     open_set = []
-    heapq.heappush(open_set, (0, 0, start, [start]))  # 🔥 mantenemos estructura consistente
+    heapq.heappush(open_set, (0, 0, start, [start]))
 
     visited = set()
 
-    WEIGHT = 10  # 🔥 hace que NO sea óptimo
+    WEIGHT = 10
 
     while open_set:
         _, _, current, path = heapq.heappop(open_set)
@@ -75,7 +75,6 @@ def solve_maze_astar(maze, start, end):
 
         r, c = current
 
-        # orden diferente
         for dr, dc in [(-1,0),(0,-1),(1,0),(0,1)]:
             nr, nc = r + dr, c + dc
             neighbor = (nr, nc)
@@ -84,13 +83,11 @@ def solve_maze_astar(maze, start, end):
                 if maze[nr, nc] != 1 and neighbor not in visited:
 
                     h = heuristic(neighbor, end)
-
-                    # 🔥 SOLO HEURÍSTICA (no óptimo)
                     f_cost = WEIGHT * h
 
                     heapq.heappush(
                         open_set,
-                        (f_cost, h, neighbor, path + [neighbor])  # 🔥 segundo valor evita errores
+                        (f_cost, h, neighbor, path + [neighbor])
                     )
 
     return None, 0
