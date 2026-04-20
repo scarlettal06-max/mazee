@@ -53,22 +53,19 @@ def solve_maze_dfs(maze, start, end):
     return None, 0
 
 
-# =========================
-# 🟢 A* (SOLO DESEMPATE)
-# =========================
+
 def solve_maze_astar(maze, start, end):
     start_time = time.time()
 
     open_set = []
-    heapq.heappush(open_set, (0, 0, start, [start]))
+    heapq.heappush(open_set, (0, start, [start]))
 
-    g_cost = {start: 0}
     visited = set()
 
-    WEIGHT = 3  # 🔥 ESTE VALOR ES LA CLAVE (puedes probar 2, 3, 5...)
+    WEIGHT = 10  # 🔥 MUY ALTO = menos óptimo
 
     while open_set:
-        _, _, current, path = heapq.heappop(open_set)
+        _, current, path = heapq.heappop(open_set)
 
         if current in visited:
             continue
@@ -79,29 +76,26 @@ def solve_maze_astar(maze, start, end):
 
         r, c = current
 
-        # 🔥 CAMBIAMOS ORDEN TAMBIÉN PARA FORZAR DIFERENCIA
+        # 🔥 ORDEN DISTINTO PARA FORZAR MÁS DIFERENCIA
         for dr, dc in [(-1,0),(0,-1),(1,0),(0,1)]:
             nr, nc = r + dr, c + dc
             neighbor = (nr, nc)
 
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
-                if maze[nr, nc] != 1:
+                if maze[nr, nc] != 1 and neighbor not in visited:
 
-                    new_g = g_cost[current] + 1
+                    # 🔥 IGNORAMOS CASI POR COMPLETO EL COSTO REAL
+                    h = heuristic(neighbor, end)
 
-                    if neighbor not in g_cost or new_g < g_cost[neighbor]:
-                        g_cost[neighbor] = new_g
+                    # 🔥 SOLO USAMOS HEURÍSTICA (comportamiento codicioso)
+                    f_cost = WEIGHT * h
 
-                        # 🔥 AQUÍ ESTÁ EL CAMBIO IMPORTANTE
-                        f_cost = new_g + WEIGHT * heuristic(neighbor, end)
-
-                        heapq.heappush(
-                            open_set,
-                            (f_cost, heuristic(neighbor, end), neighbor, path + [neighbor])
-                        )
+                    heapq.heappush(
+                        open_set,
+                        (f_cost, neighbor, path + [neighbor])
+                    )
 
     return None, 0
-      
                       
 
 # =========================
