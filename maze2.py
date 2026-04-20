@@ -56,20 +56,19 @@ def solve_maze_dfs(maze, start, end):
 # =========================
 # 🟢 A* (SOLO DESEMPATE)
 # =========================
-def heuristic(a, b):
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
 def solve_maze_astar(maze, start, end):
     start_time = time.time()
 
     open_set = []
-    heapq.heappush(open_set, (0, 0, start, [start]))  # 🔥 CAMBIO
+    heapq.heappush(open_set, (0, 0, start, [start]))
 
     g_cost = {start: 0}
     visited = set()
 
+    WEIGHT = 3  # 🔥 ESTE VALOR ES LA CLAVE (puedes probar 2, 3, 5...)
+
     while open_set:
-        _, _, current, path = heapq.heappop(open_set)  # 🔥 CAMBIO
+        _, _, current, path = heapq.heappop(open_set)
 
         if current in visited:
             continue
@@ -80,27 +79,30 @@ def solve_maze_astar(maze, start, end):
 
         r, c = current
 
-        for dr, dc in [(0,1),(1,0),(0,-1),(-1,0)]:
+        # 🔥 CAMBIAMOS ORDEN TAMBIÉN PARA FORZAR DIFERENCIA
+        for dr, dc in [(-1,0),(0,-1),(1,0),(0,1)]:
             nr, nc = r + dr, c + dc
             neighbor = (nr, nc)
 
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
                 if maze[nr, nc] != 1:
+
                     new_g = g_cost[current] + 1
 
                     if neighbor not in g_cost or new_g < g_cost[neighbor]:
                         g_cost[neighbor] = new_g
 
-                        f_cost = new_g + heuristic(neighbor, end)
+                        # 🔥 AQUÍ ESTÁ EL CAMBIO IMPORTANTE
+                        f_cost = new_g + WEIGHT * heuristic(neighbor, end)
 
-                        # 🔥 CAMBIO CLAVE AQUÍ
                         heapq.heappush(
                             open_set,
-                            (f_cost, -heuristic(neighbor, end), neighbor, path + [neighbor])
+                            (f_cost, heuristic(neighbor, end), neighbor, path + [neighbor])
                         )
 
     return None, 0
-
+      
+                      
 
 # =========================
 # 🎨 CONFIG UI (IGUAL)
