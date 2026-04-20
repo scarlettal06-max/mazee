@@ -54,26 +54,26 @@ def solve_maze_dfs(maze, start, end):
 
 
 # =========================
-# 🟢 A* (CONFIGURADO)
+# 🟢 A* CONFIGURADO (Ruta Diferente)
 # =========================
+
 def heuristic(a, b):
-    # Distancia Manhattan: |x1 - x2| + |y1 - y2|
+    # Usamos Manhattan para que priorice movimientos ortogonales
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def solve_maze_astar(maze, start, end):
     start_time = time.time()
 
-    # open_set guarda: (f_cost, counter, current_node, path, g_cost)
+    # (f_cost, counter, current_node, path, g_cost)
     open_set = []
-    # g_cost es la distancia real recorrida desde el inicio
     heapq.heappush(open_set, (0, 0, start, [start], 0))
 
-    visited = {} # Guardamos el g_cost mínimo para cada nodo
+    visited = {} # Almacenamos el g_cost para permitir re-explorar si es mejor
     
-    # 🔥 PESO DINÁMICO: 
-    # Un peso de 1.0 es A* estándar (óptimo).
-    # Un peso > 1.0 (ej. 2.0 o 5.0) hace que sea "ambicioso" y tome rutas distintas.
-    WEIGHT = 2.5 
+    # 🔥 PESO CLAVE:
+    # 1.0 = A* Estándar (Dará la misma ruta corta que BFS)
+    # > 1.0 = A* Ponderado (Explorará rutas diferentes, más directas al objetivo)
+    WEIGHT = 2.0 
 
     counter = 0
 
@@ -89,7 +89,8 @@ def solve_maze_astar(maze, start, end):
         visited[current] = g
         r, c = current
 
-        for dr, dc in [(-1,0),(0,-1),(1,0),(0,1)]:
+        # Cambiamos el orden de exploración para que difiera de BFS/DFS
+        for dr, dc in [(0, 1), (1, 0), (-1, 0), (0, -1)]:
             nr, nc = r + dr, c + dc
             neighbor = (nr, nc)
 
@@ -98,7 +99,7 @@ def solve_maze_astar(maze, start, end):
                     new_g = g + 1
                     h = heuristic(neighbor, end)
                     
-                    # f(n) = g(n) + w * h(n)
+                    # f(n) = g(n) + WEIGHT * h(n)
                     f_cost = new_g + (WEIGHT * h)
 
                     counter += 1
@@ -108,6 +109,7 @@ def solve_maze_astar(maze, start, end):
                     )
 
     return None, 0
+    
 # =========================
 # 🎨 CONFIG UI (IGUAL)
 # =========================
