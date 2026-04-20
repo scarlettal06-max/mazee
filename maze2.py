@@ -54,28 +54,30 @@ def solve_maze_dfs(maze, start, end):
 
 
 # =========================
-# 🟢 A* CONFIGURADO (Ruta Diferente)
+# 🟢 A* CON META DESVIADA (RUTA ALTERNATIVA)
 # =========================
 
 def heuristic(a, b):
-    # Usamos Manhattan para que priorice movimientos ortogonales
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 def solve_maze_astar(maze, start, end):
     start_time = time.time()
 
-    # (f_cost, counter, current_node, path, g_cost)
+    # --- TRUCO PARA CAMBIAR LA RUTA ---
+    # Creamos una "Meta Fantasma" para engañar al algoritmo al principio.
+    # Por ejemplo, forzamos que primero intente ir a la esquina inferior derecha
+    # antes de decidirse por la meta real.
+    meta_alternativa = (maze.shape[0] - 1, maze.shape[1] - 1)
+    
     open_set = []
+    # (f_cost, counter, current, path, g_cost)
     heapq.heappush(open_set, (0, 0, start, [start], 0))
 
-    visited = {} # Almacenamos el g_cost para permitir re-explorar si es mejor
-    
-    # 🔥 PESO CLAVE:
-    # 1.0 = A* Estándar (Dará la misma ruta corta que BFS)
-    # > 1.0 = A* Ponderado (Explorará rutas diferentes, más directas al objetivo)
-    WEIGHT = 2.0 
-
+    visited = {}
     counter = 0
+    
+    # Peso alto para que la desviación sea notoria
+    WEIGHT = 3.0 
 
     while open_set:
         f, _, current, path, g = heapq.heappop(open_set)
@@ -89,7 +91,6 @@ def solve_maze_astar(maze, start, end):
         visited[current] = g
         r, c = current
 
-        # Cambiamos el orden de exploración para que difiera de BFS/DFS
         for dr, dc in [(0, 1), (1, 0), (-1, 0), (0, -1)]:
             nr, nc = r + dr, c + dc
             neighbor = (nr, nc)
@@ -97,10 +98,17 @@ def solve_maze_astar(maze, start, end):
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
                 if maze[nr, nc] != 1:
                     new_g = g + 1
-                    h = heuristic(neighbor, end)
                     
-                    # f(n) = g(n) + WEIGHT * h(n)
-                    f_cost = new_g + (WEIGHT * h)
+                    # 🔥 LÓGICA DE CAMBIO DE META:
+                    # Si estamos lejos de la meta real, nos sentimos atraídos por la alternativa
+                    # Esto genera rutas que rodean el laberinto de forma distinta a BFS.
+                    dist_a_meta = heuristic(neighbor, end)
+                    dist_a_fantasma = heuristic(neighbor, meta_alternativa)
+                    
+                    # Mezclamos las metas para alterar el cálculo de f_cost
+                    h_mixta = (dist_a_meta * 0.7) + (dist_a_fantasma * 0.3)
+                    
+                    f_cost = new_g + (WEIGHT * h_mixta)
 
                     counter += 1
                     heapq.heappush(
