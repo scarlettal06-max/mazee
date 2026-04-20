@@ -53,28 +53,40 @@ def solve_maze_dfs(maze, start, end):
     return None, 0
 
 
+# =========================
+# 🟢 A* (CONFIGURADO)
+# =========================
+def heuristic(a, b):
+    # Distancia Manhattan: |x1 - x2| + |y1 - y2|
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
 def solve_maze_astar(maze, start, end):
     start_time = time.time()
 
+    # open_set guarda: (f_cost, counter, current_node, path, g_cost)
     open_set = []
-    heapq.heappush(open_set, (0, 0, start, [start]))
+    # g_cost es la distancia real recorrida desde el inicio
+    heapq.heappush(open_set, (0, 0, start, [start], 0))
 
-    visited = set()
+    visited = {} # Guardamos el g_cost mínimo para cada nodo
+    
+    # 🔥 PESO DINÁMICO: 
+    # Un peso de 1.0 es A* estándar (óptimo).
+    # Un peso > 1.0 (ej. 2.0 o 5.0) hace que sea "ambicioso" y tome rutas distintas.
+    WEIGHT = 2.5 
 
-    WEIGHT = 10  # 🔥 hace que no sea óptimo
-
-    counter = 0  # 🔥 evita errores de comparación en heap
+    counter = 0
 
     while open_set:
-        _, _, current, path = heapq.heappop(open_set)
-
-        if current in visited:
-            continue
-        visited.add(current)
+        f, _, current, path, g = heapq.heappop(open_set)
 
         if current == end:
             return path, (time.time() - start_time)
 
+        if current in visited and visited[current] <= g:
+            continue
+        
+        visited[current] = g
         r, c = current
 
         for dr, dc in [(-1,0),(0,-1),(1,0),(0,1)]:
@@ -82,20 +94,20 @@ def solve_maze_astar(maze, start, end):
             neighbor = (nr, nc)
 
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
-                if maze[nr, nc] != 1 and neighbor not in visited:
-
+                if maze[nr, nc] != 1:
+                    new_g = g + 1
                     h = heuristic(neighbor, end)
-                    f_cost = WEIGHT * h
+                    
+                    # f(n) = g(n) + w * h(n)
+                    f_cost = new_g + (WEIGHT * h)
 
                     counter += 1
-
                     heapq.heappush(
                         open_set,
-                        (f_cost, counter, neighbor, path + [neighbor])
+                        (f_cost, counter, neighbor, path + [neighbor], new_g)
                     )
 
     return None, 0
-
 # =========================
 # 🎨 CONFIG UI (IGUAL)
 # =========================
