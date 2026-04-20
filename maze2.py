@@ -53,19 +53,18 @@ def solve_maze_dfs(maze, start, end):
     return None, 0
 
 
-
 def solve_maze_astar(maze, start, end):
     start_time = time.time()
 
     open_set = []
-    heapq.heappush(open_set, (0, start, [start]))
+    heapq.heappush(open_set, (0, 0, start, [start]))  # 🔥 mantenemos estructura consistente
 
     visited = set()
 
-    WEIGHT = 10  # 🔥 MUY ALTO = menos óptimo
+    WEIGHT = 10  # 🔥 hace que NO sea óptimo
 
     while open_set:
-        _, current, path = heapq.heappop(open_set)
+        _, _, current, path = heapq.heappop(open_set)
 
         if current in visited:
             continue
@@ -76,7 +75,7 @@ def solve_maze_astar(maze, start, end):
 
         r, c = current
 
-        # 🔥 ORDEN DISTINTO PARA FORZAR MÁS DIFERENCIA
+        # orden diferente
         for dr, dc in [(-1,0),(0,-1),(1,0),(0,1)]:
             nr, nc = r + dr, c + dc
             neighbor = (nr, nc)
@@ -84,19 +83,17 @@ def solve_maze_astar(maze, start, end):
             if 0 <= nr < maze.shape[0] and 0 <= nc < maze.shape[1]:
                 if maze[nr, nc] != 1 and neighbor not in visited:
 
-                    # 🔥 IGNORAMOS CASI POR COMPLETO EL COSTO REAL
                     h = heuristic(neighbor, end)
 
-                    # 🔥 SOLO USAMOS HEURÍSTICA (comportamiento codicioso)
+                    # 🔥 SOLO HEURÍSTICA (no óptimo)
                     f_cost = WEIGHT * h
 
                     heapq.heappush(
                         open_set,
-                        (f_cost, neighbor, path + [neighbor])
+                        (f_cost, h, neighbor, path + [neighbor])  # 🔥 segundo valor evita errores
                     )
 
     return None, 0
-                      
 
 # =========================
 # 🎨 CONFIG UI (IGUAL)
