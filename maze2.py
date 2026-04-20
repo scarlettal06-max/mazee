@@ -61,7 +61,9 @@ def solve_maze_astar(maze, start, end):
 
     visited = set()
 
-    WEIGHT = 10
+    WEIGHT = 10  # 🔥 hace que no sea óptimo
+
+    counter = 0  # 🔥 evita errores de comparación en heap
 
     while open_set:
         _, _, current, path = heapq.heappop(open_set)
@@ -85,9 +87,11 @@ def solve_maze_astar(maze, start, end):
                     h = heuristic(neighbor, end)
                     f_cost = WEIGHT * h
 
+                    counter += 1
+
                     heapq.heappush(
                         open_set,
-                        (f_cost, h, neighbor, path + [neighbor])
+                        (f_cost, counter, neighbor, path + [neighbor])
                     )
 
     return None, 0
