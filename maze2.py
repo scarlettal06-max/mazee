@@ -62,22 +62,19 @@ def heuristic(a, b):
 
 def solve_maze_astar(maze, start, end):
     start_time = time.time()
-
-    # --- TRUCO PARA CAMBIAR LA RUTA ---
-    # Creamos una "Meta Fantasma" para engañar al algoritmo al principio.
-    # Por ejemplo, forzamos que primero intente ir a la esquina inferior derecha
-    # antes de decidirse por la meta real.
-    meta_alternativa = (maze.shape[0] - 1, maze.shape[1] - 1)
+    
+    # --- CONFIGURACIÓN DEL DESVÍO ---
+    # Definimos un punto que "atraiga" al algoritmo lejos de la ruta natural.
+    # Usamos la esquina inferior derecha del laberinto como imán.
+    meta_desvio = (maze.shape[0] - 1, maze.shape[1] - 1)
     
     open_set = []
     # (f_cost, counter, current, path, g_cost)
     heapq.heappush(open_set, (0, 0, start, [start], 0))
-
+    
     visited = {}
     counter = 0
-    
-    # Peso alto para que la desviación sea notoria
-    WEIGHT = 3.0 
+    WEIGHT = 3.5  # Un peso alto hace que el desvío sea más agresivo
 
     while open_set:
         f, _, current, path, g = heapq.heappop(open_set)
@@ -99,16 +96,16 @@ def solve_maze_astar(maze, start, end):
                 if maze[nr, nc] != 1:
                     new_g = g + 1
                     
-                    # 🔥 LÓGICA DE CAMBIO DE META:
-                    # Si estamos lejos de la meta real, nos sentimos atraídos por la alternativa
-                    # Esto genera rutas que rodean el laberinto de forma distinta a BFS.
-                    dist_a_meta = heuristic(neighbor, end)
-                    dist_a_fantasma = heuristic(neighbor, meta_alternativa)
+                    # 🔥 LÓGICA DE DESVÍO:
+                    # Calculamos la distancia a la meta real y a la meta de desvío
+                    h_real = heuristic(neighbor, end)
+                    h_desvio = heuristic(neighbor, meta_desvio)
                     
-                    # Mezclamos las metas para alterar el cálculo de f_cost
-                    h_mixta = (dist_a_meta * 0.7) + (dist_a_fantasma * 0.3)
+                    # Combinamos ambas: 60% atracción al desvío, 40% a la meta real
+                    # Esto hará que el camino "de la vuelta" por zonas ineficientes
+                    h_final = (h_desvio * 0.6) + (h_real * 0.4)
                     
-                    f_cost = new_g + (WEIGHT * h_mixta)
+                    f_cost = new_g + (WEIGHT * h_final)
 
                     counter += 1
                     heapq.heappush(
